@@ -53,6 +53,14 @@ async def start(update, context):
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
 
+import asyncio
+
+@flask_app.before_first_request
+def initialize():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(application.initialize())
+    loop.run_until_complete(application.start())
+
 
 # Webhook route
 @flask_app.route("/", methods=["POST"])
