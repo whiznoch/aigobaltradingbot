@@ -55,8 +55,6 @@ application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
 application.add_handler(CallbackQueryHandler(qa_callback_router))
 
-import asyncio
-
 
 # Webhook route
 @flask_app.route("/", methods=["POST"])
