@@ -7,7 +7,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-
+from telegram.ext import CallbackQueryHandler
+from router_callback import qa_callback_router
 from config import BOT_TOKEN
 from database import conn, cur
 from keyboards import main_menu
@@ -52,6 +53,7 @@ async def start(update, context):
 # Add handlers
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
+application.add_handler(CallbackQueryHandler(qa_callback_router))
 
 import asyncio
 
