@@ -1,1 +1,2 @@
-web: gunicorn yourfilename:flask_app
+web: gunicorn main:flask_app
+
