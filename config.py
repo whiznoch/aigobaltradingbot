@@ -1,8 +1,2 @@
 import os
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
