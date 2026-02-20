@@ -59,19 +59,18 @@ application.add_handler(CallbackQueryHandler(qa_callback_router))
 
 # ---------------- START TELEGRAM APP ON BOOT ---------------- #
 
-async def init_telegram():
-    await application.initialize()
-    await application.start()
-
-loop = asyncio.get_event_loop()
-loop.create_task(init_telegram())
 
 
 # ---------------- WEBHOOK ROUTE ---------------- #
 
 @flask_app.route("/", methods=["POST"])
 async def webhook():
+    if not application.running:
+        await application.initialize()
+        await application.start()
+
     data = request.get_json(force=True)
     update = Update.de_json(data, application.bot)
     await application.process_update(update)
+
     return "ok"
