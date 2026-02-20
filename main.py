@@ -1,26 +1,22 @@
 import os
+import asyncio
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from router_callback import qa_callback_router
+from router_text import text_router
+from keyboards import main_menu
 from config import BOT_TOKEN
 from database import conn, cur
-from keyboards import main_menu
-from router_text import text_router
-from router_callback import qa_callback_router
 
-# Create Flask app
 flask_app = Flask(__name__)
 
-# Build Telegram application (synchronous initialization)
+# Telegram application
 application = Application.builder().token(BOT_TOKEN).build()
-application.initialize()  # synchronous init, no await
 
-# --- Bot Handlers ---
-
-def start(update, context):
+# --- Handlers ---
+async def start(update, context):
     user = update.effective_user
-
-    # Add user to database
     cur.execute(
         "INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)",
         (user.id, user.username)
@@ -42,32 +38,32 @@ def start(update, context):
         "🏆 Join trading tournaments and win real rewards."
     )
 
-    update.message.reply_text(
+    await update.message.reply_text(
         welcome_text,
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
 
-# Register handlers
+# Add handlers to the bot
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
 application.add_handler(CallbackQueryHandler(qa_callback_router))
 
-# --- Webhook Route ---
-
+# --- Webhook route ---
 @flask_app.route("/", methods=["POST"])
 def webhook():
-    """Receive updates from Telegram and process them."""
+    """Receive updates from Telegram."""
     data = request.get_json(force=True)
     update = Update.de_json(data, application.bot)
-    application.process_update(update)  # synchronous
+
+    # Run async process_update in a new event loop
+    asyncio.run(application.process_update(update))
     return "ok", 200
 
-# Optional: simple health check
+# Optional: simple GET route to check the server
 @flask_app.route("/", methods=["GET"])
-def health_check():
-    return "Bot is running", 200
+def index():
+    return "Bot is running!", 200
 
-# Run Flask only for local testing
 if __name__ == "__main__":
     flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
