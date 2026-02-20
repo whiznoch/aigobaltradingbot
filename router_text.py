@@ -14,17 +14,11 @@ async def text_router(update, context):
     elif text == "📊 Trade":
         await update.message.reply_text(
             "📊 *Start Trading with AIglobaltrading*\n\n"
-            "Trade crypto, forex, and commodities with leverage.  Click below to get started 📈",
+            "Trade crypto, forex, and commodities with leverage. Click below to get started 📈",
             parse_mode="Markdown",
             reply_markup=trade_buttons()
         )
-    elif text == "🙋‍ Support":
-        await update.message.reply_text(
-            "🙋 *AIglobaltrading Support bot*\n\n"
-            "Need a hand? Open a ticket in our Support Bot 🤝",
-            parse_mode="Markdown",
-            reply_markup=Support_buttons()
-        )
+
     elif text == "📈 Portfolio":
         await update.message.reply_text(
             "📈 *Manage portfolio*\n\n"
@@ -32,12 +26,29 @@ async def text_router(update, context):
             parse_mode="Markdown",
             reply_markup=Portfolio_buttons()
         )
+
+    elif text == "❓ Q&A":
+        await update.message.reply_text(
+            "❓ *AIglobaltrading Q&A*\n\n"
+            "Choose a topic below:",
+            parse_mode="Markdown",
+            reply_markup=qa_buttons()
+        )
+
     elif text == "📰 Official News":
         await update.message.reply_text(
             "📰 *AIGlobal Trading — Official News*\n\n"
-            "This channel delivers verified announcements, feature releases, system updates, and important platform notices. Only trust updates posted here or shared directly by the AIGlobal Trading bot. No hype. No spam. Just official information.",
+            "This channel delivers verified announcements, feature releases, system updates, and important platform notices.",
             parse_mode="Markdown",
             reply_markup=Official_buttons()
+        )
+
+    elif text == "🙋‍ Support":
+        await update.message.reply_text(
+            "🙋 *AIglobaltrading Support bot*\n\n"
+            "Need help? Open a ticket below 🤝",
+            parse_mode="Markdown",
+            reply_markup=Support_buttons()
         )
 
     else:
