@@ -29,7 +29,7 @@ application = ApplicationBuilder().token(TOKEN).build()
 # ===== START COMMAND =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "**Welcome to AIglobaltradingbot – First Leveraged DEX on TON!** ⚡️\n\n" "*Earn seasonal Reward Points (RP) by trading, depositing, or learning—" "then convert them into* $AIglobaltrading *tokens!*\n\n" "📈 Trade crypto, forex, and commodities with **up to x150 leverage** " "directly from your wallet.\n\n" "💰 Deposit your USDT, TON, and NOT into AIglobaltrading Vaults and earn " "**up to 14.81% APR** with no lock-ups.\n\n" "🧠 Learn DeFi and trading and earn with **AIglobaltrading Academy**.\n\n" "🫂 Invite your friends to AIglobaltrading Trade to get part of their trading fees " "and **earn extra RP**.\n\n" "🎮 Complete tasks & unlock achievements to grab even more rewards with fun!\n\n" "🏆 Join trading tournaments and win real rewards.","
+        "**Welcome to AIglobaltradingbot – First Leveraged DEX on TON!** ⚡️\n\n" "*Earn seasonal Reward Points (RP) by trading, depositing, or learning—" "then convert them into* $AIglobaltrading *tokens!*\n\n" "📈 Trade crypto, forex, and commodities with **up to x150 leverage** " "directly from your wallet.\n\n" "💰 Deposit your USDT, TON, and NOT into AIglobaltrading Vaults and earn " "**up to 14.81% APR** with no lock-ups.\n\n" "🧠 Learn DeFi and trading and earn with **AIglobaltrading Academy**.\n\n" "🫂 Invite your friends to AIglobaltrading Trade to get part of their trading fees " "and **earn extra RP**.\n\n" "🎮 Complete tasks & unlock achievements to grab even more rewards with fun!\n\n" "🏆 Join trading tournaments and win real rewards.,"
         reply_markup=main_menu()
     )
 
