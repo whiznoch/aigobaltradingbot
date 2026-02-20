@@ -2,27 +2,56 @@ import os
 import asyncio
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
+)
+
+from router_text import text_router
+from router_callback import qa_callback_router
+from keyboards import main_menu
 
 TOKEN = os.getenv("BOT_TOKEN")
 
 flask_app = Flask(__name__)
 
-# Create Telegram Application (async)
+# Build Telegram Application
 application = ApplicationBuilder().token(TOKEN).build()
 
-# ===== HANDLERS =====
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot is alive 🚀")
 
+# ===== START COMMAND =====
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Welcome to AIglobalTrading 🚀",
+        reply_markup=main_menu()
+    )
+
+
+# ===== REGISTER HANDLERS =====
 application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
+application.add_handler(CallbackQueryHandler(qa_callback_router))
+
+
+# ===== START TELEGRAM APPLICATION ON BOOT =====
+async def init_telegram():
+    await application.initialize()
+    await application.start()
+
+asyncio.get_event_loop().run_until_complete(init_telegram())
 
 
 # ===== WEBHOOK ROUTE =====
 @flask_app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
-    asyncio.run(application.process_update(update))
+    asyncio.get_event_loop().run_until_complete(
+        application.process_update(update)
+    )
     return "ok", 200
 
 
