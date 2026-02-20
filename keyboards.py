@@ -15,7 +15,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 def earn_buttons():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("💸 Start Earning", url="https://coinvestglobalfx.com/Clientarea/login")],
-        [InlineKeyboardButton("📘 Learn More", url="https://coinvestglobalfx.com/Clientarea/login")],
+        [InlineKeyboardButton("📘 Learn More", url="https://t.me/+qO6R0I2fErtlNDAx")],
     ])
 
 def trade_buttons():
@@ -24,7 +24,7 @@ def trade_buttons():
     ])
 def Support_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Open a ticket", url="https://coinvestglobalfx.com/Clientarea/login")],
+        [InlineKeyboardButton("Open a ticket", url="https://t.me/+c66hHjj1qI81MWQx")],
     ])
 def Portfolio_buttons():
     return InlineKeyboardMarkup([
@@ -32,7 +32,7 @@ def Portfolio_buttons():
     ])
 def Official_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("👉 Join the official community:", url="https://coinvestglobalfx.com/Clientarea/login")],
+        [InlineKeyboardButton("👉 Join the official community:", url="https://t.me/+c66hHjj1qI81MWQx")],
     ])
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
