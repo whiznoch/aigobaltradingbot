@@ -22,12 +22,7 @@ application.add_handler(CommandHandler("start", start))
 @flask_app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
-    
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(application.process_update(update))
-    loop.close()
-
+    asyncio.run(application.process_update(update))
     return "ok", 200
 
 
