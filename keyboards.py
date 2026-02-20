@@ -14,25 +14,25 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 def earn_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("💸 Start Earning", url="https://whiznoch.guru")],
-        [InlineKeyboardButton("📘 Learn More", url="https://whiznoch.guru")],
+        [InlineKeyboardButton("💸 Start Earning", url="https://coinvestglobalfx.com/Clientarea/login")],
+        [InlineKeyboardButton("📘 Learn More", url="https://coinvestglobalfx.com/Clientarea/login")],
     ])
 
 def trade_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📊 Start Trading", url="https://whiznoch.guru")],
+        [InlineKeyboardButton("📊 Start Trading", url="https://coinvestglobalfx.com/Clientarea/login")],
     ])
 def Support_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Open a ticket", url="https://whiznoch.guru")],
+        [InlineKeyboardButton("Open a ticket", url="https://coinvestglobalfx.com/Clientarea/login")],
     ])
 def Portfolio_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("View Portfolio", url="https://whiznoch.guru")],
+        [InlineKeyboardButton("View Portfolio", url="https://coinvestglobalfx.com/Clientarea/login")],
     ])
 def Official_buttons():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("👉 Join the official community:", url="https://t.me/+c66hHjj1qI81MWQx")],
+        [InlineKeyboardButton("👉 Join the official community:", url="https://coinvestglobalfx.com/Clientarea/login")],
     ])
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
