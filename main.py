@@ -10,12 +10,16 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+import requests
 
 from router_text import text_router
 from router_callback import qa_callback_router
 from keyboards import main_menu
-CHANNEL_ID = "@Aiglobaltradingbot"  # or -100xxxxxxxx
+
 TOKEN = os.getenv("BOT_TOKEN")
+
+CHANNEL_ID = "1003515229818"  # or -100xxxxxxxx
 
 flask_app = Flask(__name__)
 
@@ -48,68 +52,59 @@ application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
 application.add_handler(CallbackQueryHandler(qa_callback_router))
 
-# 🔥 ONLY INITIALIZE (DO NOT start())
-loop.run_until_complete(application.initialize())
-
-async def setup():
-    await application.initialize()
-    await application.start()
-
-    application.job_queue.run_repeating(
-        derivatives_update,
-        interval=60,   # 2 hours
-        first=10
-    )
-
-import requests
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-async def derivatives_update(context):
+async def market_update(context: ContextTypes.DEFAULT_TYPE):
     try:
-        url = "https://api.coingecko.com/api/v3/simple/price"
-        params = {
-            "ids": "bitcoin,ethereum",
-            "vs_currencies": "usd",
-            "include_24hr_change": "true"
-        }
+        # Example API (CoinGecko free)
+        response = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true"
+        )
+        data = response.json()
 
-        data = requests.get(url, params=params).json()
+        btc_price = data["bitcoin"]["usd"]
+        btc_change = data["bitcoin"]["usd_24h_change"]
 
-        btc = data["bitcoin"]["usd"]
-        btc_change = round(data["bitcoin"]["usd_24h_change"], 2)
+        eth_price = data["ethereum"]["usd"]
+        eth_change = data["ethereum"]["usd_24h_change"]
 
-        eth = data["ethereum"]["usd"]
-        eth_change = round(data["ethereum"]["usd_24h_change"], 2)
+        summary = f"""
+🚨 AIglobalTrading Derivatives Alert
 
-        bias = "Neutral"
-        if btc_change > 3:
-            bias = "Bullish Momentum"
-        elif btc_change < -3:
-            bias = "Bearish Pressure"
+🟡 BTC: ${btc_price:,} ({btc_change:.2f}%)
+🔵 ETH: ${eth_price:,} ({eth_change:.2f}%)
 
-        message = f"""
-🚨 AIglobalTrading Market Intel
+Funding sentiment: {"Bullish 🟢" if btc_change > 0 else "Bearish 🔴"}
 
-🟢 BTC: ${btc} ({btc_change}%)
-🟢 ETH: ${eth} ({eth_change}%)
-
-Market Bias: {bias}
-
-Trade smart. Volatility is active.
+⚡ Trade smart. Manage risk.
 """
 
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⚡ Trade Now", url="https://whiznoch.guru")]
-        ])
+        keyboard = [
+            [InlineKeyboardButton("📈 Trade Now", url="https://your-trading-link.com")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
         await context.bot.send_message(
             chat_id=CHANNEL_ID,
-            text=message,
-            reply_markup=keyboard
+            text=summary,
+            reply_markup=reply_markup
         )
 
     except Exception as e:
         print("Market update error:", e)
+        
+
+# ===== START APPLICATION PROPERLY =====
+async def start_app():
+    await application.initialize()
+    await application.start()
+
+    application.job_queue.run_repeating(
+        market_update,
+        interval=7200,  # 2 hours
+        first=15
+    )
+
+loop.run_until_complete(start_app())
+
 # ===== WEBHOOK ROUTE =====
 @flask_app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
