@@ -19,7 +19,7 @@ from keyboards import main_menu
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-CHANNEL_ID = "1003515229818"  # or -100xxxxxxxx
+CHANNEL_ID = -1003515229818  # or -100xxxxxxxx
 
 flask_app = Flask(__name__)
 
@@ -99,8 +99,8 @@ async def start_app():
 
     application.job_queue.run_repeating(
         market_update,
-        interval=7200,  # 2 hours
-        first=15
+        interval=30,  # 2 hours
+        first=10
     )
 
 loop.run_until_complete(start_app())
