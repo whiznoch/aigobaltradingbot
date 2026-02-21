@@ -82,3 +82,7 @@ def index():
 
 if __name__ == "__main__":
     flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
+from asgiref.wsgi import WsgiToAsgi
+
+flask_app_asgi = WsgiToAsgi(flask_app)
