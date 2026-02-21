@@ -18,6 +18,7 @@ from keyboards import main_menu
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = -1003515229818  # Your channel ID
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Full URL to your bot's webhook, e.g., https://yourapp.onrender.com/<TOKEN>
 
 flask_app = Flask(__name__)
 
@@ -70,9 +71,8 @@ Funding sentiment: {"Bullish 🟢" if btc_change > 0 else "Bearish 🔴"}
     except Exception as e:
         print("Market update error:", e)
 
-# ===== APPLICATION STARTUP =====
-async def start_bot():
-    # Build application
+# ===== APPLICATION SETUP =====
+async def build_application():
     application = ApplicationBuilder().token(TOKEN).build()
 
     # Register handlers
@@ -80,19 +80,20 @@ async def start_bot():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
     application.add_handler(CallbackQueryHandler(qa_callback_router))
 
-    # Initialize before using job_queue
+    # Initialize job queue
     await application.initialize()
-    # Schedule repeating jobs
-    application.job_queue.run_repeating(market_update, interval=30, first=10)  # 2 hours
-    # Start the bot
-    await application.start()
+    # Schedule repeating market updates
+    application.job_queue.run_repeating(market_update, interval=7200, first=10)
+
+    # Set webhook (for Render deployment)
+    await application.bot.set_webhook(WEBHOOK_URL)
+
     return application
 
-# ===== ASYNCIO EVENT LOOP =====
-loop = asyncio.get_event_loop()
-application = loop.run_until_complete(start_bot())
-
 # ===== FLASK ROUTES =====
+flask_app = Flask(__name__)
+application = asyncio.run(build_application())
+
 @flask_app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
@@ -103,6 +104,6 @@ def webhook():
 def index():
     return "Bot running 🚀", 200
 
-# ===== OPTIONAL: Standalone Flask run for local testing =====
+# ===== OPTIONAL LOCAL RUN =====
 if __name__ == "__main__":
     flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
