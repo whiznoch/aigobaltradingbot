@@ -11,17 +11,20 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from asgiref.wsgi import WsgiToAsgi
 
 from router_text import text_router
 from router_callback import qa_callback_router
 from keyboards import main_menu
 
+# ===== CONFIG =====
 TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = -1003515229818
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # e.g., https://yourapp.onrender.com/<BOT_TOKEN>
 
-# Flask app
+# ===== FLASK APP =====
 flask_app = Flask(__name__)
+flask_app_asgi = WsgiToAsgi(flask_app)  # wrap for async
 
 # ===== TELEGRAM HANDLERS =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -32,10 +35,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def market_update(context: ContextTypes.DEFAULT_TYPE):
     now_utc = datetime.datetime.utcnow()
-    if not (8 <= now_utc.hour < 22):  # Only send updates between 08:00–22:00 UTC
-        print(f"Skipping market update at {now_utc.hour}:00 UTC")
+    if not (8 <= now_utc.hour < 22):  # only post 08–22 UTC
         return
-
     try:
         data = requests.get(
             "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true"
@@ -53,21 +54,19 @@ async def market_update(context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print("Market update error:", e)
 
-# ===== BUILD TELEGRAM APPLICATION =====
+# ===== BUILD TELEGRAM APP =====
 application = ApplicationBuilder().token(TOKEN).build()
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
 application.add_handler(CallbackQueryHandler(qa_callback_router))
 
-# ===== START JOB QUEUE AND WEBHOOK =====
+# ===== SETUP JOB QUEUE & WEBHOOK =====
+import asyncio
 async def setup_bot():
-    await application.initialize()  # Required for job_queue
+    await application.initialize()
     application.job_queue.run_repeating(market_update, interval=30, first=10)
-    # Set Telegram webhook
     await application.bot.set_webhook(WEBHOOK_URL)
 
-# Schedule setup_bot as a background task when Flask starts
-import asyncio
 asyncio.get_event_loop().create_task(setup_bot())
 
 # ===== FLASK ROUTES =====
@@ -81,6 +80,5 @@ async def webhook():
 def index():
     return "Bot running 🚀", 200
 
-# ===== OPTIONAL LOCAL RUN =====
 if __name__ == "__main__":
     flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
