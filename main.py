@@ -19,7 +19,7 @@ from keyboards import main_menu
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-CHANNEL_ID = os.getenv("-1003631149457")
+CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 flask_app = Flask(__name__)
 
