@@ -18,7 +18,6 @@ from router_callback import qa_callback_router
 from keyboards import main_menu
 
 TOKEN = os.getenv("BOT_TOKEN")
-
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 flask_app = Flask(__name__)
@@ -69,10 +68,11 @@ def generate_signal(price_change):
         momentum = "Weak"
         confidence = random.randint(50, 60)
 
-    return trend, momentum, signal, confidence
-    # ===== AI SIGNAL SUMMARY JOB =====
-async def send_live_update(context: ContextTypes.DEFAULT_TYPE):
+return trend, momentum, signal, confidence
 
+
+# ===== AI SIGNAL SUMMARY JOB =====
+async def send_live_update(context: ContextTypes.DEFAULT_TYPE):
     try:
         btc = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT").json()
         eth = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT").json()
@@ -121,8 +121,8 @@ application.add_handler(CallbackQueryHandler(qa_callback_router))
 # Schedule AI signal every 3 hours
 application.job_queue.run_repeating(
     send_live_update,
-    interval=10800,   # 3 hours
-    first=20
+    interval=30,   # 3 hours
+    first=5
 )
 
 # 🔥 ONLY INITIALIZE (DO NOT start())
