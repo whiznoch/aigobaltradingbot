@@ -83,7 +83,7 @@ async def build_application():
     # Initialize job queue
     await application.initialize()
     # Schedule repeating market updates
-    application.job_queue.run_repeating(market_update, interval=7200, first=10)
+    application.job_queue.run_repeating(market_update, interval=30, first=10)
 
     # Set webhook (for Render deployment)
     await application.bot.set_webhook(WEBHOOK_URL)
