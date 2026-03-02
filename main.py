@@ -62,10 +62,27 @@ last_alerts = {}
 
 # ===== FETCH PRICE =====
 def fetch_price(pair):
-    resp = requests.get(f"https://api.binance.com/api/v3/ticker/24hr?symbol={pair}")
-    data = resp.json()
-    return float(data["lastPrice"]), float(data["priceChangePercent"])
+    try:
+        resp = requests.get(
+            f"https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+            timeout=10
+        )
 
+        if resp.status_code != 200:
+            print(f"HTTP error for {pair}: {resp.status_code}")
+            return None, None
+
+        data = resp.json()
+
+        if "lastPrice" not in data:
+            print(f"Invalid Binance response for {pair}: {data}")
+            return None, None
+
+        return float(data["lastPrice"]), float(data["priceChangePercent"])
+
+    except Exception as e:
+        print(f"Network error for {pair}: {e}")
+        return None, None
 # ===== SEND MARKET UPDATES =====
 async def send_live_update(context: ContextTypes.DEFAULT_TYPE = None):
     messages = []
@@ -73,6 +90,9 @@ async def send_live_update(context: ContextTypes.DEFAULT_TYPE = None):
     for pair in PAIRS:
         try:
             price, change = fetch_price(pair)
+
+if price is None:
+    continue
             trend, momentum, signal, confidence = generate_signal(change)
 
             if abs(change) >= ALERT_THRESHOLD and last_alerts.get(pair) != round(price, 2):
