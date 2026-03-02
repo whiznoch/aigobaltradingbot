@@ -31,8 +31,8 @@ application = ApplicationBuilder().token(TOKEN).build()
 
 # ===== START COMMAND =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-await update.message.reply_text(
-    """CoinvestGlobalBot is a leveraged decentralized trading platform built on TON, enabling users to trade crypto, forex, and commodities with up to 150x leverage — directly from their wallets.
+    await update.message.reply_text(
+        """CoinvestGlobalBot is a leveraged decentralized trading platform built on TON, enabling users to trade crypto, forex, and commodities with up to 150x leverage — directly from their wallets.
 
 🔐 Non-custodial execution
 📈 High-performance leveraged trading
@@ -43,9 +43,8 @@ await update.message.reply_text(
 Users can earn Reward Points (RP) through trading and participation, join tournaments, deposit assets into yield vaults, and scale within a unified trading ecosystem engineered for performance and growth.
 
 Built for serious traders. Designed for scale.""",
-    reply_markup=main_menu()
-)
-
+        reply_markup=main_menu()
+    )
 # ===== SIMPLE AI SIGNAL ENGINE =====
 def generate_signal(price_change):
 
