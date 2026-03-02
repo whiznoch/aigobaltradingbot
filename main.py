@@ -1,8 +1,6 @@
 import os
-import asyncio
 import random
 import requests
-from flask import Flask, request
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -20,12 +18,7 @@ from keyboards import main_menu
 # ===== ENV VARIABLES =====
 TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
-
-flask_app = Flask(__name__)
-
-# Create one global event loop
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
+RENDER_DOMAIN = os.getenv("RENDER_DOMAIN")  # e.g., coinvestbot.onrender.com
 
 # Build Telegram Application
 application = ApplicationBuilder().token(TOKEN).build()
@@ -67,8 +60,8 @@ def generate_signal(price_change):
 
 # ===== COINS & ALERT SETTINGS =====
 PAIRS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"]
-ALERT_THRESHOLD = 2.0   # percent change to trigger alert
-last_alerts = {}        # store last alerted price per coin
+ALERT_THRESHOLD = 2.0
+last_alerts = {}
 
 # ===== FETCH PRICE =====
 def fetch_price(pair):
@@ -85,7 +78,6 @@ async def send_live_update(context: ContextTypes.DEFAULT_TYPE = None):
             price, change = fetch_price(pair)
             trend, momentum, signal, confidence = generate_signal(change)
 
-            # Only alert if price change exceeds threshold and price is new
             if abs(change) >= ALERT_THRESHOLD and last_alerts.get(pair) != round(price, 2):
                 last_alerts[pair] = round(price, 2)
                 emoji = "🟢" if signal == "BUY" else "🔴" if signal == "SELL" else "🟡"
@@ -113,20 +105,13 @@ application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_rou
 application.add_handler(CallbackQueryHandler(qa_callback_router))
 
 # ===== JOB QUEUE =====
-# Runs every 15 minutes; first run after 10 seconds
 application.job_queue.run_repeating(send_live_update, interval=900, first=10)
 
-# Start Application
-loop.run_until_complete(application.initialize())
-loop.run_until_complete(application.start())
-
-# ===== WEBHOOK ROUTE =====
-@flask_app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    loop.run_until_complete(application.process_update(update))
-    return "ok", 200
-
-@flask_app.route("/")
-def index():
-    return "Bot running 🚀", 200
+# ===== START BOT WITH WEBHOOK =====
+if __name__ == "__main__":
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        url_path=TOKEN,
+        webhook_url=f"https://{RENDER_DOMAIN}/{TOKEN}",
+    )
