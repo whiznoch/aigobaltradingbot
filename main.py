@@ -1,7 +1,6 @@
 import os
 import random
 import requests
-from datetime import datetime
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -11,7 +10,6 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-from flask import Flask, request
 
 from router_text import text_router
 from router_callback import qa_callback_router
@@ -19,23 +17,32 @@ from keyboards import main_menu
 
 # ===== ENV VARIABLES =====
 TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_ID = os.getenv("CHANNEL_ID")  # Example: -1003631149457
-RENDER_DOMAIN = os.getenv("RENDER_DOMAIN")  # Example: aigobaltradingbot-15.onrender.com
+CHANNEL_ID = os.getenv("CHANNEL_ID")  # Telegram channel ID like -1001234567890
+RENDER_DOMAIN = os.getenv("RENDER_DOMAIN")  # e.g., yourbot.onrender.com
 
-# ===== FLASK APP =====
-flask_app = Flask(__name__)
-
-# ===== TELEGRAM BOT =====
+# Build Telegram Application
 application = ApplicationBuilder().token(TOKEN).build()
 
-# ===== COINS & ALERT SETTINGS =====
-PAIRS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"]
-ALERT_THRESHOLD = 2.0  # percent change to trigger alert
-last_alerts = {}  # store last alerted price per coin
+# ===== START COMMAND =====
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        """🚀 *CoinvestGlobalBot*
 
-# ===== HELPER FUNCTIONS =====
+CoinvestGlobalBot is a leveraged decentralized trading platform built on TON, enabling users to trade crypto, forex, and commodities with up to 150x leverage — directly from their wallets.
+
+🔐 Non-custodial execution
+📈 High-performance leveraged trading
+💰 Competitive yield vaults
+🏆 Trading tournaments & competitions
+🎯 Reward-based engagement system
+
+Built for serious traders. Designed for scale.""",
+        reply_markup=main_menu(),
+        parse_mode="Markdown"
+    )
+
+# ===== SIMPLE AI SIGNAL ENGINE =====
 def generate_signal(price_change):
-    """Simple AI signal logic"""
     if price_change > 1.5:
         trend, signal = "Bullish", "BUY"
     elif price_change < -1.5:
@@ -52,59 +59,65 @@ def generate_signal(price_change):
 
     return trend, momentum, signal, confidence
 
+# ===== COINS & ALERT SETTINGS =====
+PAIRS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"]
+ALERT_THRESHOLD = 2.0  # percent change to trigger alert
+last_alerts = {}        # store last alerted price per coin
+
+# ===== FETCH PRICE VIA COINGECKO =====
 def fetch_price(pair):
-    """Fetch latest price & 24h change from Binance"""
-    resp = requests.get(f"https://api.binance.com/api/v3/ticker/24hr?symbol={pair}")
+    coin_map = {
+        "BTCUSDT": "bitcoin",
+        "ETHUSDT": "ethereum",
+        "BNBUSDT": "binancecoin",
+        "SOLUSDT": "solana"
+    }
+    coin_id = coin_map.get(pair)
+    if not coin_id:
+        return None, None
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd&include_24hr_change=true"
+    resp = requests.get(url)
     data = resp.json()
-    return float(data["lastPrice"]), float(data["priceChangePercent"])
+    price = data[coin_id]["usd"]
+    change = data[coin_id]["usd_24h_change"]
+    return float(price), float(change)
 
-# ===== COMMANDS =====
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        """CoinvestGlobalBot is a leveraged decentralized trading platform built on TON, enabling users to trade crypto, forex, and commodities with up to 150x leverage — directly from their wallets.
-
-🔐 Non-custodial execution
-📈 High-performance leveraged trading
-💰 Competitive yield vaults
-🏆 Trading tournaments & competitions
-🎯 Reward-based engagement system
-
-Users can earn Reward Points (RP) through trading and participation, join tournaments, deposit assets into yield vaults, and scale within a unified trading ecosystem engineered for performance and growth.
-
-Built for serious traders. Designed for scale.""",
-        reply_markup=main_menu()
-    )
-
-# ===== PROFESSIONAL SIGNALS =====
+# ===== SEND PROFESSIONAL MARKET UPDATES =====
 async def send_live_update(context: ContextTypes.DEFAULT_TYPE = None):
     messages = []
 
     for pair in PAIRS:
         try:
             price, change = fetch_price(pair)
+            if price is None:
+                continue
             trend, momentum, signal, confidence = generate_signal(change)
 
-            # Only alert if price change exceeds threshold & price is new
+            # Only alert if price change exceeds threshold and price is new
             if abs(change) >= ALERT_THRESHOLD and last_alerts.get(pair) != round(price, 2):
                 last_alerts[pair] = round(price, 2)
-
                 emoji = "🟢" if signal == "BUY" else "🔴" if signal == "SELL" else "🟡"
+                arrow = "📈" if signal == "BUY" else "📉" if signal == "SELL" else "➖"
                 messages.append(
-                    f"{emoji} *{pair} Signal*\n"
-                    f"💰 *Price:* ${price:,.2f}\n"
-                    f"📊 *Trend:* {trend}\n"
-                    f"⚡ *Momentum:* {momentum}\n"
-                    f"📈 *Action:* *{signal}*\n"
-                    f"🎯 *Confidence:* {confidence}%\n"
-                    f"⏰ Updated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+                    f"{arrow} {emoji} *{pair} Signal*\n"
+                    f"💵 Price: `${price:,.2f}`\n"
+                    f"📊 Trend: {trend}\n"
+                    f"⚡ Momentum: {momentum}\n"
+                    f"🔔 Signal: *{signal}*\n"
+                    f"✅ Confidence: {confidence}%\n"
+                    f"----------------------"
                 )
         except Exception as e:
-            print(f"Error fetching {pair}: {e}")
+            print(f"HTTP error for {pair}: {e}")
 
     if messages:
-        text = "🔥 *Crypto Market Signals*\n\n" + "\n\n".join(messages) + "\n\n⚡ Powered by AIglobalTrading Engine"
+        text = "🚨 *Crypto Market Alerts*\n\n" + "\n".join(messages)
         try:
-            await application.bot.send_message(chat_id=CHANNEL_ID, text=text, parse_mode="Markdown")
+            await application.bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=text,
+                parse_mode="Markdown"
+            )
         except Exception as e:
             print("Error sending alert:", e)
 
@@ -114,11 +127,8 @@ application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_rou
 application.add_handler(CallbackQueryHandler(qa_callback_router))
 
 # ===== JOB QUEUE =====
-# Immediate update
-import asyncio
-asyncio.get_event_loop().create_task(send_live_update())
-# Repeating every 15 minutes
-application.job_queue.run_repeating(send_live_update, interval=900, first=900)
+# Run every 15 minutes; first run after 10 seconds
+application.job_queue.run_repeating(send_live_update, interval=900, first=10)
 
 # ===== START BOT WITH WEBHOOK =====
 if __name__ == "__main__":
@@ -128,15 +138,3 @@ if __name__ == "__main__":
         url_path=TOKEN,
         webhook_url=f"https://{RENDER_DOMAIN}/{TOKEN}",
     )
-
-# ===== FLASK ROUTES =====
-@flask_app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    import asyncio
-    asyncio.get_event_loop().create_task(application.process_update(update))
-    return "ok", 200
-
-@flask_app.route("/")
-def index():
-    return "Bot running 🚀", 200
