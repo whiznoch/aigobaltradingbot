@@ -64,7 +64,7 @@ last_alerts = {}
 def fetch_price(pair):
     try:
         resp = requests.get(
-            f"https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+            f"https://api.binance.com/api/v3/ticker/24hr?symbol={pair}",
             timeout=10
         )
 
@@ -83,39 +83,54 @@ def fetch_price(pair):
     except Exception as e:
         print(f"Network error for {pair}: {e}")
         return None, None
+        
 # ===== SEND MARKET UPDATES =====
 async def send_live_update(context: ContextTypes.DEFAULT_TYPE = None):
+    print("MARKET JOB RUNNING")
     messages = []
 
     for pair in PAIRS:
         try:
             price, change = fetch_price(pair)
 
-if price is None:
-    continue
+            # Skip if fetch failed
+            if price is None:
+                continue
+
             trend, momentum, signal, confidence = generate_signal(change)
 
             if abs(change) >= ALERT_THRESHOLD and last_alerts.get(pair) != round(price, 2):
                 last_alerts[pair] = round(price, 2)
+
                 emoji = "🟢" if signal == "BUY" else "🔴" if signal == "SELL" else "🟡"
+
                 messages.append(
                     f"{emoji} *{pair}*\n"
                     f"Price: ${price:,.2f}\n"
+                    f"24h Change: {change:.2f}%\n"
                     f"Trend: {trend}\n"
                     f"Momentum: {momentum}\n"
                     f"Signal: *{signal}*\n"
                     f"Confidence: {confidence}%"
                 )
+
         except Exception as e:
-            print(f"Error fetching {pair}: {e}")
+            print(f"Error processing {pair}: {e}")
 
     if messages:
         text = "⚡ *Crypto Market Alerts*\n\n" + "\n\n".join(messages)
+
         try:
-            await application.bot.send_message(chat_id=CHANNEL_ID, text=text, parse_mode="Markdown")
+            await application.bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=text,
+                parse_mode="Markdown"
+            )
+            print("Alert sent successfully")
+
         except Exception as e:
             print("Error sending alert:", e)
-
+            
 # ===== REGISTER HANDLERS =====
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
